@@ -4,6 +4,8 @@ from selenium import webdriver as wd
 
 from read import rename_files
 
+url_list = []
+
 
 def parse_url(url_list=[]):
     browser = wd.Firefox()

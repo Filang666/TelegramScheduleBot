@@ -12,6 +12,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    # parsing.parse_url()
-    # parsing.download_files(parsing.parse_url)
+    # parsing.parse_url(parsing.url_list)
+    # parsing.download_files(parsing.url_list)
     asyncio.run(main())
