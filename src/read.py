@@ -1,6 +1,7 @@
 import os
 import re
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import pypdf
 import pytesseract
@@ -18,34 +19,84 @@ class PDFProcessor:
             "ПЯТНИЦА": "Пятница.pdf",
             "СУББОТА": "Суббота.pdf",
         }
+        # Set base directory to parent of src
+        self.base_dir = Path(__file__).parent.parent
 
-    def rename_files(self, directory: str = ".") -> None:
+    def rename_files(self, directory: Optional[Union[str, Path]] = None) -> None:
         """Rename PDF files based on their content."""
-        for file in os.listdir(directory):
+        # Convert directory to Path object
+        if directory is None:
+            dir_path = self.base_dir
+        elif isinstance(directory, str):
+            dir_path = Path(directory)
+        else:
+            dir_path = directory
+
+        # Ensure directory exists
+        if not dir_path.exists():
+            print(f"Directory {dir_path} does not exist.")
+            return
+
+        # Scan for PDF files
+        for file in os.listdir(str(dir_path)):
             if file.endswith(".pdf"):
-                filepath = os.path.join(directory, file)
+                filepath = dir_path / file
                 try:
-                    text = pypdf.PdfReader(filepath).pages[0].extract_text()
+                    # Use string path for pypdf
+                    text = pypdf.PdfReader(str(filepath)).pages[0].extract_text()
                     for day_key, new_name in self.days_mapping.items():
                         if day_key in text:
-                            os.rename(filepath, os.path.join(directory, new_name))
+                            new_filepath = dir_path / new_name
+                            # Check if we would overwrite an existing file
+                            if new_filepath.exists() and new_filepath != filepath:
+                                print(
+                                    f"Warning: {new_name} already exists. Skipping rename."
+                                )
+                                break
+
+                            filepath.rename(new_filepath)
+                            print(f"Renamed: {file} -> {new_name}")
                             break
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
 
-    def extract_text_pdf(self, pdf_path: str) -> str:
+    def extract_text_pdf(self, pdf_path: Union[str, Path]) -> str:
         """Extract text from PDF using pypdf."""
         try:
-            text = pypdf.PdfReader(pdf_path).pages[0].extract_text()
+            # Convert to string if it's a Path
+            if isinstance(pdf_path, Path):
+                pdf_path_str = str(pdf_path)
+            else:
+                pdf_path_str = pdf_path
+
+            # Check if file exists
+            if not os.path.exists(pdf_path_str):
+                print(f"PDF file not found: {pdf_path_str}")
+                return ""
+
+            text = pypdf.PdfReader(pdf_path_str).pages[0].extract_text()
             return text
         except Exception as e:
             print(f"Error extracting text from {pdf_path}: {e}")
             return ""
 
-    def ocr_pdf_to_text(self, pdf_path: str, dpi: int = 300, lang: str = "rus") -> str:
+    def ocr_pdf_to_text(
+        self, pdf_path: Union[str, Path], dpi: int = 300, lang: str = "rus"
+    ) -> str:
         """Extract text from PDF using OCR."""
         try:
-            pages = convert_from_path(pdf_path, dpi)
+            # Convert to string if it's a Path
+            if isinstance(pdf_path, Path):
+                pdf_path_str = str(pdf_path)
+            else:
+                pdf_path_str = pdf_path
+
+            # Check if file exists
+            if not os.path.exists(pdf_path_str):
+                print(f"PDF file not found: {pdf_path_str}")
+                return ""
+
+            pages = convert_from_path(pdf_path_str, dpi)
             extracted_text = ""
 
             for page in pages:
@@ -65,7 +116,49 @@ class PDFProcessor:
     def parse_schedule_text(self, class_number: str, day: str) -> str:
         """
         Parse schedule text for a specific class and day.
-        Note: This is a placeholder - you'll need to implement the actual parsing logic.
+        This is a placeholder - implement actual parsing logic here.
         """
-        # TODO: Implement actual schedule parsing logic
-        return f"Расписание для {class_number} на {day}\n[Здесь будет расписание]"
+        # Look for the PDF file in the parent directory
+        pdf_file = self.base_dir / f"{day}.pdf"
+
+        if not pdf_file.exists():
+            # Try with .pdf extension if not already there
+            if not pdf_file.suffix:
+                pdf_file = pdf_file.with_suffix(".pdf")
+
+        if pdf_file.exists():
+            try:
+                # Try to extract text
+                text = self.extract_text_pdf(pdf_file)
+                if not text.strip():
+                    text = self.ocr_pdf_to_text(pdf_file)
+
+                # Basic parsing - find the class in the text
+                lines = text.split("\n")
+                schedule_lines = []
+                found_class = False
+
+                for line in lines:
+                    if class_number in line.upper():
+                        found_class = True
+                    if found_class:
+                        # Add line until we hit another class or empty line
+                        if line.strip() and not any(
+                            c in line.upper()
+                            for c in ["А", "Б", "В", "Г"]
+                            if c != class_number[-1]
+                        ):
+                            schedule_lines.append(line.strip())
+                        elif line.strip() == "" and schedule_lines:
+                            break
+
+                if schedule_lines:
+                    return f"📚 Расписание для {class_number} на {day}:\n" + "\n".join(
+                        schedule_lines[:10]
+                    )
+                else:
+                    return f"❌ Не удалось найти расписание для {class_number} на {day}"
+            except Exception as e:
+                return f"⚠️ Ошибка при чтении расписания: {str(e)}"
+        else:
+            return f"📄 Файл с расписанием на {day} не найден."

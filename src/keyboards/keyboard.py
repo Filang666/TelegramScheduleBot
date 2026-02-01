@@ -1,32 +1,49 @@
-from typing import List
+import os
+import sys
+from typing import List, Optional
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from create_bot import admins
+
 
 class KeyboardManager:
-    def __init__(self, admins: List[int]):
-        self.admins = admins
+    def __init__(self):
+        self.class_list: List[str] = [
+            "11А",
+            "11Б",
+            "10А",
+            "10Б",
+            "9Б",
+            "9А",
+            "8Б",
+            "8А",
+            "7Б",
+            "7А",
+            "6Б",
+            "6А",
+            "5Б",
+            "5А",
+        ]
 
     def main_keyboard(self, user_telegram_id: int) -> ReplyKeyboardMarkup:
         """Create main keyboard with class selection."""
-        kb_list = [
-            [KeyboardButton(text="11Б")],
-            [KeyboardButton(text="11А")],
-            [KeyboardButton(text="10Б")],
-            [KeyboardButton(text="10А")],
-            [KeyboardButton(text="9Б")],
-            [KeyboardButton(text="9А")],
-            [KeyboardButton(text="8Б")],
-            [KeyboardButton(text="8А")],
-            [KeyboardButton(text="7Б")],
-            [KeyboardButton(text="7А")],
-            [KeyboardButton(text="6Б")],
-            [KeyboardButton(text="6А")],
-            [KeyboardButton(text="5Б")],
-            [KeyboardButton(text="5А")],
-        ]
+        kb_list = []
 
-        if user_telegram_id in self.admins:
+        # Add class buttons in pairs (for better layout)
+        for i in range(0, len(self.class_list), 2):
+            row = []
+            if i < len(self.class_list):
+                row.append(KeyboardButton(text=self.class_list[i]))
+            if i + 1 < len(self.class_list):
+                row.append(KeyboardButton(text=self.class_list[i + 1]))
+            if row:
+                kb_list.append(row)
+
+        # Add admin panel button for admins
+        if user_telegram_id in admins:
             kb_list.append([KeyboardButton(text="Админ панель")])
 
         return ReplyKeyboardMarkup(
@@ -35,15 +52,21 @@ class KeyboardManager:
 
     def days_keyboard(self, class_number: str) -> ReplyKeyboardMarkup:
         """Create days selection keyboard for a specific class."""
-        days_kb_list = [
-            [KeyboardButton(text=f"Понедельник {class_number}")],
-            [KeyboardButton(text=f"Вторник {class_number}")],
-            [KeyboardButton(text=f"Среда {class_number}")],
-            [KeyboardButton(text=f"Четверг {class_number}")],
-            [KeyboardButton(text=f"Пятница {class_number}")],
-            [KeyboardButton(text=f"Суббота {class_number}")],
-            [KeyboardButton(text="Поменять класс")],
-        ]
+        days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+        days_kb_list = []
+
+        # Add day buttons in pairs
+        for i in range(0, len(days), 2):
+            row = []
+            if i < len(days):
+                row.append(KeyboardButton(text=f"{days[i]} {class_number}"))
+            if i + 1 < len(days):
+                row.append(KeyboardButton(text=f"{days[i + 1]} {class_number}"))
+            if row:
+                days_kb_list.append(row)
+
+        # Add "Change class" button
+        days_kb_list.append([KeyboardButton(text="Поменять класс")])
 
         return ReplyKeyboardMarkup(
             keyboard=days_kb_list, resize_keyboard=True, one_time_keyboard=True

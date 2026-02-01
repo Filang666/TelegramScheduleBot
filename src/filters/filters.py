@@ -1,11 +1,12 @@
+import os
+import sys
+
 from aiogram.filters import Filter
 from aiogram.types import Message
 
-from create_bot import BotHandler
-
-# Create a BotHandler instance to access admins
-bot_handler = BotHandler()
-admins = bot_handler.admins
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from create_bot import admins
 
 
 class AdminFilter(Filter):

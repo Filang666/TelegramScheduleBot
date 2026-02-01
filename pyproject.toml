@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telegram-schedule-bot"
+version = "1.0.0"
+description = "Telegram bot for managing and distributing school schedules"
+readme = "README.md"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+keywords = ["telegram", "bot", "schedule", "school", "education"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: Russian",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "aiogram>=3.10.0",
+    "python-decouple>=3.8",
+    "pypdf>=4.0.2",
+    "pytesseract>=0.3.10",
+    "pdf2image>=1.16.3",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.2",
+    "selenium>=4.15.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "flake8>=6.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+    "tox>=4.0.0",
+]
+pdf = [
+    "pypdf>=4.0.0",
+    "pytesseract>=0.3.0",
+    "pdf2image>=1.16.0",
+    "pillow>=10.0.0",
+]
+web = [
+    "selenium>=4.0.0",
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/telegram-schedule-bot"
+Documentation = "https://github.com/yourusername/telegram-schedule-bot/wiki"
+Repository = "https://github.com/yourusername/telegram-schedule-bot"
+Issues = "https://github.com/yourusername/telegram-schedule-bot/issues"
+
+[project.scripts]
+schedule-bot = "aiogram_run:main"
+schedule-bot-start = "main:main"
+schedule-parser = "parsing:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
