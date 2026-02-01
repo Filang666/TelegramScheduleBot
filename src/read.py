@@ -1,57 +1,71 @@
 import os
 import re
-from collections import deque
-from os import listdir, rename
-from posixpath import pardir
-from random import shuffle
+from typing import Optional
 
 import pypdf
 import pytesseract
 from pdf2image import convert_from_path
-from typing_extensions import List
-
-pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract-ocr"
 
 
-def rename_files():
-    for file in listdir():
-        if file.endswith(".pdf"):
-            text = pypdf.PdfReader(file).pages[0].extract_text()
-            if text.find("ПОНЕДЕЛЬНИК") != -1:
-                rename(file, "Понедельник.pdf")
-            if text.find("ВТОРНИК") != -1:
-                rename(file, "Вторник.pdf")
-            if text.find("СРЕДА") != -1:
-                rename(file, "Среда.pdf")
-            if text.find("ЧЕТВЕРГ") != -1:
-                rename(file, "Четверг.pdf")
-            if text.find("ПЯТНИЦА") != -1:
-                rename(file, "Пятница.pdf")
-            if text.find("СУББОТА") != -1:
-                rename(file, "Суббота.pdf")
+class PDFProcessor:
+    def __init__(self, tesseract_path: str = r"/usr/bin/tesseract-ocr"):
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        self.days_mapping = {
+            "ПОНЕДЕЛЬНИК": "Понедельник.pdf",
+            "ВТОРНИК": "Вторник.pdf",
+            "СРЕДА": "Среда.pdf",
+            "ЧЕТВЕРГ": "Четверг.pdf",
+            "ПЯТНИЦА": "Пятница.pdf",
+            "СУББОТА": "Суббота.pdf",
+        }
 
+    def rename_files(self, directory: str = ".") -> None:
+        """Rename PDF files based on their content."""
+        for file in os.listdir(directory):
+            if file.endswith(".pdf"):
+                filepath = os.path.join(directory, file)
+                try:
+                    text = pypdf.PdfReader(filepath).pages[0].extract_text()
+                    for day_key, new_name in self.days_mapping.items():
+                        if day_key in text:
+                            os.rename(filepath, os.path.join(directory, new_name))
+                            break
+                except Exception as e:
+                    print(f"Error processing {file}: {e}")
 
-def extract_text_pdf(pdf_path):
-    text = pypdf.PdfReader(pdf_path).pages[0].extract_text()
-    return text
+    def extract_text_pdf(self, pdf_path: str) -> str:
+        """Extract text from PDF using pypdf."""
+        try:
+            text = pypdf.PdfReader(pdf_path).pages[0].extract_text()
+            return text
+        except Exception as e:
+            print(f"Error extracting text from {pdf_path}: {e}")
+            return ""
 
+    def ocr_pdf_to_text(self, pdf_path: str, dpi: int = 300, lang: str = "rus") -> str:
+        """Extract text from PDF using OCR."""
+        try:
+            pages = convert_from_path(pdf_path, dpi)
+            extracted_text = ""
 
-def ocr_pdf_to_text(pdf_path):
-    pages = convert_from_path(pdf_path, 300)
+            for page in pages:
+                text = pytesseract.image_to_string(page, lang=lang)
+                extracted_text += text + "\n"
 
-    extracted_text = ""
-    for page_num, page in enumerate(pages):
-        text = pytesseract.image_to_string(page, lang="rus")
-        extracted_text += text
+            return extracted_text
+        except Exception as e:
+            print(f"Error performing OCR on {pdf_path}: {e}")
+            return ""
 
-    return extracted_text
+    def sum_numbers(self, input_string: str) -> int:
+        """Sum all numbers found in a string."""
+        numbers_as_strings = re.findall(r"[0-9]+", input_string)
+        return sum(int(num) for num in numbers_as_strings)
 
-
-def sum_numbers(input_string):
-    numbers_as_strings = re.findall(r"[0-9]+", input_string)
-
-    total_sum = sum(int(num) for num in numbers_as_strings)
-    return total_sum
-
-
-# im tired i dont know how to solve this problem i tryed ocr pdf extract text but this schedule soooo broken machine cant solve this
+    def parse_schedule_text(self, class_number: str, day: str) -> str:
+        """
+        Parse schedule text for a specific class and day.
+        Note: This is a placeholder - you'll need to implement the actual parsing logic.
+        """
+        # TODO: Implement actual schedule parsing logic
+        return f"Расписание для {class_number} на {day}\n[Здесь будет расписание]"

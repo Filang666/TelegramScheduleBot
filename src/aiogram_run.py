@@ -1,17 +1,42 @@
 import asyncio
+import logging
 
-import parsing
-from create_bot import bot, dp
-from handlers.start import start_router
+from create_bot import BotHandler
+from handlers.start import StartHandler, start_router
+from parsing import ScheduleParser
 
 
-async def main():
-    dp.include_router(start_router)
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+class BotApplication:
+    def __init__(self):
+        self.bot_handler = BotHandler()
+        self.schedule_parser = ScheduleParser()
+        self.start_handler = StartHandler(self.bot_handler.admins, start_router)
+
+    async def main(self) -> None:
+        """Main application entry point."""
+        # Include routers
+        self.bot_handler.dp.include_router(start_router)
+
+        # Delete webhook and start polling
+        await self.bot_handler.bot.delete_webhook(drop_pending_updates=True)
+        await self.bot_handler.dp.start_polling(self.bot_handler.bot)
+
+    def parse_schedule(self) -> None:
+        """Parse and download schedule files."""
+        try:
+            print("Starting schedule parsing...")
+            self.schedule_parser.parse_and_download()
+            print("Schedule parsing completed!")
+        except Exception as e:
+            print(f"Error during parsing: {e}")
 
 
 if __name__ == "__main__":
-    # parsing.parse_url(parsing.url_list)
-    # parsing.download_files(parsing.url_list)
-    asyncio.run(main())
+    # Create application instance
+    app = BotApplication()
+
+    # Uncomment to parse schedule on startup
+    # app.parse_schedule()
+
+    # Run the bot
+    asyncio.run(app.main())
