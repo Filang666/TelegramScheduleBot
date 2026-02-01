@@ -38,7 +38,6 @@ cp .env.example .env
 ## Configuration
 
 ## Create a .env file in the project root:
-env
 
 TOKEN=your_telegram_bot_token_here
 ADMINS=123456789,987654321  
